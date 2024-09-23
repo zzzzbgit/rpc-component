@@ -8,7 +8,7 @@ public class TestServer {
 
     public static void main(String[] args) {
         ServerConfig serverConfig = new ServerConfig();
-        serverConfig.setPort(9991).setMaxConnections(32);
+        serverConfig.setPort(9992).setMaxConnections(64);
         new Server(serverConfig).start(new TestServiceImpl());
     }
 }

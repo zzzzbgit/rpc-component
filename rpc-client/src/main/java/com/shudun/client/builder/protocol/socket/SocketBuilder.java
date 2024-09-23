@@ -18,7 +18,7 @@ public class SocketBuilder extends ClientBuilder {
      */
     @Override
     public Client doInitialize() {
-        Client client = new SocketCli(config);
+        Client client = new SocketClient(config);
         RefreshAliveHostThread.Launch(client);
         return client;
     }

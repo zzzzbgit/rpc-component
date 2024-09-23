@@ -1,9 +1,8 @@
 package com.shudun.client.builder.protocol.socket;
 
 import com.shudun.client.builder.protocol.Initializer;
-import com.shudun.client.pool.FixedPool;
-import com.shudun.client.pool.PoolMap;
-import com.shudun.client.pool.element.impl.SocketClient;
+import com.shudun.client.builder.pool.GeneralFixedPool;
+import com.shudun.client.builder.pool.PoolMap;
 import com.shudun.client.config.Config;
 import lombok.extern.slf4j.Slf4j;
 
@@ -13,7 +12,7 @@ import java.net.InetSocketAddress;
 public class SocketInitializer extends Initializer {
 
 
-    private PoolMap<InetSocketAddress, SocketClient> poolMap;
+    private PoolMap<InetSocketAddress, GeneralFixedPool<InetSocketAddress, SocketElement>> poolMap;
 
 
     public SocketInitializer(Config config) {
@@ -25,8 +24,14 @@ public class SocketInitializer extends Initializer {
      */
     @Override
     public void doInitProtocol() {
-        poolMap = new PoolMap<>(config.getMaxConnections(),
-                (key) -> new SocketClient(key, config.getConnectTimeout()));
+        poolMap = new PoolMap<InetSocketAddress, GeneralFixedPool<InetSocketAddress, SocketElement>>() {
+            @Override
+            protected GeneralFixedPool<InetSocketAddress, SocketElement> newPool(InetSocketAddress key) {
+                return new GeneralFixedPool<>(config.getMaxConnections(),
+                        (isa)-> new SocketElement(isa, config.getConnectTimeout()),
+                        key);
+            }
+        };
     }
 
     /**
@@ -35,7 +40,7 @@ public class SocketInitializer extends Initializer {
      * @param isa
      * @return
      */
-    public FixedPool<InetSocketAddress, SocketClient> AcquirePool(InetSocketAddress isa) {
+    public GeneralFixedPool<InetSocketAddress, SocketElement> AcquirePool(InetSocketAddress isa) {
         return this.poolMap.get(isa);
     }
 

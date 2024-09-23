@@ -1,4 +1,4 @@
-package com.shudun.client.pool.exception;
+package com.shudun.client.builder.pool.exception;
 
 public class PoolException extends RuntimeException{
 

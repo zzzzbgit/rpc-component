@@ -1,7 +1,7 @@
-package com.shudun.client.pool.element.impl;
+package com.shudun.client.builder.protocol.socket;
 
-import com.shudun.client.pool.element.PoolElement;
-import com.shudun.client.pool.exception.PoolException;
+import com.shudun.client.builder.pool.element.PoolElement;
+import com.shudun.client.builder.pool.exception.PoolException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.DataInputStream;
@@ -14,67 +14,65 @@ import java.net.SocketException;
 import java.nio.ByteBuffer;
 
 /**
- * Socket客户端
+ * Socket element
  */
 @Slf4j
-public class SocketClient implements PoolElement<byte[], byte[]> {
+public class SocketElement extends PoolElement<byte[], byte[]> {
 
-    /**
-     * Socket
-     */
+    /*Socket*/
     private Socket socket;
 
-    /**
-     * 输入流
-     */
+    /*input*/
     private DataInputStream inputStream;
 
-    /**
-     * 输出流
-     */
+    /*output*/
     private DataOutputStream outputStream;
 
-    /**
-     * 是否已关闭
-     */
-    private volatile boolean closed;
-
-    /**
-     * 远程地址
-     */
+    /*remote address*/
     private final InetSocketAddress isa;
 
     /**
-     * 超时时间
-     */
-    private final int timeout;
-
-    /**
-     * 默认重置次数
-     */
-    private final int DEFAULT_RESET_TIMES = 3;
-
-    /**
-     * 构造
+     * constructor
      *
-     * @param isa     ip:port
-     * @param timeout 超时时间
+     * @param isa     remote address
+     * @param timeout timeout
      */
-    public SocketClient(InetSocketAddress isa, int timeout) {
-        this.isa = isa;
-        this.timeout = timeout;
-        this.create();
-        log.debug("SocketClient:{}.create Success!", this);
+    public SocketElement(InetSocketAddress isa, int timeout) {
+        this(isa, timeout, 3);
     }
 
     /**
-     * 创建
+     * constructor
+     *
+     * @param isa        remote address
+     * @param timeout    timeout
+     * @param retryTimes retry times
      */
-    private void create() {
+    public SocketElement(InetSocketAddress isa, int timeout, int retryTimes) {
+        this.retryTimes = retryTimes;
+        this.isa = isa;
+        this.timeout = timeout;
+        this.init();
+    }
+
+    /**
+     * get
+     *
+     * @return
+     */
+    public Socket get() {
+        return this.socket;
+    }
+
+    /**
+     * init
+     */
+    @Override
+    public void init() {
         try {
             this.socket = new Socket();
             this.socket.connect(this.isa, this.timeout * 1000);
-            this.socket.setSoTimeout(this.timeout + 1000);
+            this.socket.setSoTimeout(this.timeout * 1000);
             this.socket.setTcpNoDelay(true);
             this.socket.setKeepAlive(true);
             this.inputStream = new DataInputStream(this.socket.getInputStream());
@@ -82,43 +80,16 @@ public class SocketClient implements PoolElement<byte[], byte[]> {
             this.outputStream.flush();
             this.closed = false;
         } catch (IOException e) {
-            log.error("SocketClient:{}.create Error!", this, e);
-            throw new PoolException("SocketClient.create Error!", e);
+            log.error("SocketElement:{}.init Error!", this, e);
+            throw new PoolException("SocketElement.init Error!", e);
         }
     }
 
-    /**
-     * 重置
-     */
-    @Override
-    public void reSet() {
-        close();
-        create();
-        log.debug("SocketClient:{}.reSet!", this);
-    }
 
     /**
-     * 重试到最大次数
-     */
-    @Override
-    public void retry() {
-        int retry = 1;
-        while (retry <= DEFAULT_RESET_TIMES) {
-            log.debug("SocketClient:{}.retry start! times:{}", this, retry);
-            try {
-                reSet();
-                break;
-            } catch (PoolException pe) {
-                log.error("SocketClient:{}.retry Error! times:{}", this, retry, pe);
-                retry++;
-            }
-        }
-    }
-
-    /**
-     * 执行
+     * execute
      *
-     * @param inData 输入数据
+     * @param inData input param
      * @return
      */
     @Override
@@ -134,24 +105,24 @@ public class SocketClient implements PoolElement<byte[], byte[]> {
             send(sendMessage);
             return recv();
         } catch (IOException e) {
-            log.error("SocketClient:{}.execute(),IOException Error!", this, e);
+            log.error("SocketElement:{}.execute(),IOException Error!", this, e);
             if (e instanceof EOFException || e instanceof SocketException) {
                 retry();
                 try {
                     send(sendMessage);
                     return recv();
                 } catch (IOException e1) {
-                    throw new PoolException("SocketClient.execute Error!", e1);
+                    throw new PoolException("SocketElement.execute Error!", e1);
                 }
             }
-            throw new PoolException("SocketClient.execute Error!", e);
+            throw new PoolException("SocketElement.execute Error!", e);
         }
     }
 
     /**
-     * 发送
+     * send data
      *
-     * @param sendMessage 发送数据
+     * @param sendMessage data
      * @throws IOException
      */
     private void send(byte[] sendMessage) throws IOException {
@@ -161,7 +132,7 @@ public class SocketClient implements PoolElement<byte[], byte[]> {
     }
 
     /**
-     * 接收
+     * recv data
      *
      * @return 接收数据
      * @throws IOException
@@ -204,17 +175,6 @@ public class SocketClient implements PoolElement<byte[], byte[]> {
             this.inputStream = null;
             this.socket = null;
         }
-    }
-
-    public boolean isClosed() {
-        return closed;
-    }
-
-    public InetSocketAddress getIsa() {
-        return isa;
-    }
-
-    public int getTimeout() {
-        return timeout;
+        log.debug("SocketElement:{}.close! ", this);
     }
 }

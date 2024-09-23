@@ -7,19 +7,18 @@ import com.shudun.base.util.SecretKeyUtil;
 import com.shudun.base.util.SerializingUtil;
 import com.shudun.base.util.Tools;
 import com.shudun.client.builder.protocol.Client;
-import com.shudun.client.pool.FixedPool;
-import com.shudun.client.pool.element.impl.SocketClient;
+import com.shudun.client.builder.pool.GeneralFixedPool;
 import com.shudun.client.config.Config;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.InetSocketAddress;
 
 @Slf4j
-public class SocketCli extends Client {
+public class SocketClient extends Client {
 
     private final SocketInitializer initializer;
 
-    public SocketCli(Config config) {
+    public SocketClient(Config config) {
         super(config);
         this.initializer = new SocketInitializer(config);
         this.initializer.doInitProtocol();
@@ -36,8 +35,8 @@ public class SocketCli extends Client {
         if (config.isAuthEnable()) {
             rpcRequest.setSignValue(SecretKeyUtil.sign(config.getSecretKey(), rpcRequest));
         }
-        FixedPool<InetSocketAddress, SocketClient> pool = null;
-        SocketClient socket = null;
+        GeneralFixedPool<InetSocketAddress, SocketElement> pool = null;
+        SocketElement socket = null;
         try {
             pool = initializer.AcquirePool(isa);
         } catch (Exception e) {

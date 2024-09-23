@@ -4,22 +4,19 @@ import com.shudun.base.constants.ConfigConstants;
 import com.shudun.base.dto.Container;
 import com.shudun.base.dto.RpcRequest;
 import com.shudun.base.dto.RpcResponse;
-import com.shudun.base.enums.ErrorEnum;
 import com.shudun.base.exception.ConnectionRefusedException;
-import com.shudun.base.exception.NoHostsException;
+import com.shudun.client.builder.balance.LoadBalance;
+import com.shudun.client.builder.balance.Polling;
 import com.shudun.client.config.Config;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class Client {
 
-    protected final AtomicLong INCR = new AtomicLong(0);
-
-    protected static final long MAX =8000000000000000000L;
+    protected LoadBalance balance = new Polling();
 
     protected final Config config;
 
@@ -34,15 +31,7 @@ public abstract class Client {
     public abstract RpcResponse Send(RpcRequest rpcRequest, InetSocketAddress isa);
 
     public InetSocketAddress next() {
-        if (this.config.getAliveHost().isEmpty()) {
-            throw new NoHostsException(ErrorEnum.ALIVE_HOST_IS_NULL.getMessage());
-        } else if (this.config.getAliveHost().size() == 1) {
-            return this.config.getAliveHost().get(0);
-        } else {
-            long andIncrement = INCR.getAndIncrement();
-            if (andIncrement > MAX) INCR.set(0);
-            return this.config.getAliveHost().get((int) (andIncrement % this.config.getAliveHost().size()));
-        }
+        return balance.next(this.config.getAliveHost());
     }
 
     public void resetAliveHost() {

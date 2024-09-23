@@ -1,8 +1,10 @@
 package com.shudun.server;
 
 import com.shudun.base.constants.ConfigConstants;
-import com.shudun.server.coder.MessageEncoder;
-import com.shudun.server.coder.ProtocolDecoder;
+import com.shudun.base.coder.MessageEncoder;
+import com.shudun.base.coder.ProtocolDecoder;
+import com.shudun.base.dto.RpcRequest;
+import com.shudun.base.dto.RpcResponse;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -24,14 +26,14 @@ public class ServerInitializer extends ChannelInitializer<SocketChannel> {
     protected void initChannel(SocketChannel ch) {
         ChannelPipeline pipeline = ch.pipeline();
         //解码器
-        pipeline.addLast(new ProtocolDecoder(ConfigConstants.MAX_FRAME_LENGTH,
+        pipeline.addLast(new ProtocolDecoder<>(RpcRequest.class, ConfigConstants.MAX_FRAME_LENGTH,
                 ConfigConstants.LENGTH_FIELD_OFFSET,
                 ConfigConstants.LENGTH_FIELD_LENGTH,
                 ConfigConstants.LENGTH_ADJUSTMENT,
                 ConfigConstants.INITIAL_BYTES_TO_STRIP,
                 false));
         //编码器
-        pipeline.addLast(new MessageEncoder());
+        pipeline.addLast(new MessageEncoder<>(RpcResponse.class));
         pipeline.addLast(new IdleStateHandler(7, 7, 10, TimeUnit.SECONDS));
         pipeline.addLast(new ServerHandler(servers));
     }

@@ -1,7 +1,6 @@
 package com.shudun.server;
 
 import com.shudun.base.dto.Container;
-import com.shudun.base.dto.Message;
 import com.shudun.base.dto.RpcRequest;
 import com.shudun.base.dto.RpcResponse;
 import io.netty.channel.ChannelHandler;
@@ -14,7 +13,7 @@ import java.util.*;
 
 @ChannelHandler.Sharable
 @Slf4j
-public class ServerHandler extends SimpleChannelInboundHandler<Message> {
+public class ServerHandler extends SimpleChannelInboundHandler<RpcRequest> {
 
     public ServerHandler(Object... servers) {
         INTERFACE_MAP.put(HeartbeatHandler.class.getName(), new HeartbeatHandler());
@@ -26,12 +25,11 @@ public class ServerHandler extends SimpleChannelInboundHandler<Message> {
     private Map<String, Object> INTERFACE_MAP = new HashMap<>();
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, Message msg) {
+    protected void channelRead0(ChannelHandlerContext ctx, RpcRequest rpcRequest) {
         /*定义res*/
         Object res = null;
         RpcResponse rpcResponse;
         /*从消息中获取rpcRequest对象*/
-        RpcRequest rpcRequest = msg.getRpcRequest();
         try {
             /*从IOC容器中获取接口实现类对象*/
             Object service = INTERFACE_MAP.get(rpcRequest.getInterfaceName());

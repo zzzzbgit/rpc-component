@@ -1,8 +1,5 @@
-package com.shudun.server.coder;
+package com.shudun.base.coder;
 
-import com.shudun.base.dto.Message;
-import com.shudun.base.dto.RpcRequest;
-import com.shudun.base.dto.RpcResponse;
 import com.shudun.base.util.SerializingUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
@@ -11,8 +8,12 @@ import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 /**
  * Rpc消息解码器
  */
-public class ProtocolDecoder extends LengthFieldBasedFrameDecoder {
+public class ProtocolDecoder<T> extends LengthFieldBasedFrameDecoder {
+
+    private final Class<T> clz;
+
     /**
+     * @param clz  class
      * @param maxFrameLength  帧的最大长度
      * @param lengthFieldOffset length字段偏移的地址
      * @param lengthFieldLength length字段所占的字节长
@@ -20,8 +21,9 @@ public class ProtocolDecoder extends LengthFieldBasedFrameDecoder {
      * @param initialBytesToStrip 解析时候跳过多少个长度
      * @param failFast 为true，当frame长度超过maxFrameLength时立即报TooLongFrameException异常，为false，读取完整个帧再报异常
      */
-    public ProtocolDecoder(int maxFrameLength, int lengthFieldOffset, int lengthFieldLength, int lengthAdjustment, int initialBytesToStrip, boolean failFast) {
+    public ProtocolDecoder(Class<T> clz, int maxFrameLength, int lengthFieldOffset, int lengthFieldLength, int lengthAdjustment, int initialBytesToStrip, boolean failFast) {
         super(maxFrameLength, lengthFieldOffset, lengthFieldLength, lengthAdjustment, initialBytesToStrip, failFast);
+        this.clz = clz;
     }
 
     @Override
@@ -43,7 +45,6 @@ public class ProtocolDecoder extends LengthFieldBasedFrameDecoder {
         in.readBytes(bytes);
         in.release();
         /*消息反序列化*/
-        RpcRequest rpcRequest = SerializingUtil.deserializeFromByte(bytes, RpcRequest.class);
-        return new Message(length,rpcRequest);
+        return SerializingUtil.deserializeFromByte(bytes, clz);
     }
 }

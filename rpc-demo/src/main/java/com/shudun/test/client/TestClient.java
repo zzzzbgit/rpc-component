@@ -17,12 +17,12 @@ public class TestClient {
 
     static {
         Properties properties = new Properties();
-        properties.put(ConfigConstants.CLENT_SERVERADDRESS, "10.1.20.79:9991");
+        properties.put(ConfigConstants.CLENT_SERVERADDRESS, "10.1.20.79:9992");
         properties.put(ConfigConstants.CLIENT_MAXCONNECTIONS, "384");
 
         Config config = ConfigResolver.ResolverProperties(properties);
 //        testService = ClientBuilder.getInstance(ClientBuilder.NETTY, config).build(TestService.class, null);
-        testService = ClientBuilder.getInstance(ClientBuilder.SOCKET, config).build(TestService.class, null);
+        testService = ClientBuilder.getInstance(ClientBuilder.NETTY, config).build(TestService.class, null);
     }
 
     public static void main(String[] args) throws InterruptedException {

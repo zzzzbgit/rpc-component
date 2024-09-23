@@ -18,7 +18,7 @@ public class NettyBuilder extends ClientBuilder {
      */
     @Override
     public Client doInitialize() {
-        Client client = new NettyCli(config);
+        Client client = new NettyClient(config);
         RefreshAliveHostThread.Launch(client);
         return client;
     }
